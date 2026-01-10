@@ -17,10 +17,7 @@
   }
 #define TARGET_FPS 60
 #define FONT_COUNT 3
-// #define FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
-#define FONT_PATH "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-// #define FONT_PATH "/usr/share/fonts/truetype/msttcorefonts/Comic_Sans_MS.ttf"
-// #define FONT_PATH "/home/hp/.fonts/calibri.ttf"
+#define FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
 #define FONT_SIZES \
   { 48, 36, 24 }
 #define MAX_WIDGETS 20
