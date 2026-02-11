@@ -566,7 +566,7 @@ static size_t utf8_strlen(const char* s) {
 static void set_input_cursor(bool yes, char* text) {
   int len = strlen(text);
   if (yes)
-    text[len] = '|';
+    text[len] = '_';
   else
     len = len - 2;
   text[len + 1] = '\0';
