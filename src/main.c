@@ -4,8 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* RayLib GUI Experiments: Text, Fonts (ASCII plus codepoints U+00a1 to U+024f),
- * Images, Buttons, Labels, Panels, Input fields, Callbacks */
+/*
+ *
+ * RayLib GUI Experiments: Text, Fonts (ASCII plus codepoints U+00a1 to U+024f),
+ * Images, Buttons, Labels, Panels, Input fields, Scrollable Text, Callbacks
+ *
+ * Version 14 Feb 2026
+ *
+ */
 
 #define SCREEN_WIDTH 1350
 #define SCREEN_HEIGHT 800
@@ -43,14 +49,18 @@ static void paintTextButton(const char* text,
                             Font font,
                             Color textcolor,
                             bool hover);
+static void paintScrollbar(int id);
 static size_t u32_to_utf8(const uint32_t cp, char out[5]);
 static void remove_last_utf8_char(char* str);
 static size_t utf8_strlen(const char* s);
 static void set_input_cursor(bool yes, char* text);
 static void process_keys(void);
 static void stoptyping(void);
-static void click(size_t id);
-static void print(size_t id);
+static void allocate_and_wrap_longtext(int id, char* text);
+static char* wrap_text_words(const char* text, int width);
+static void click(int id);
+static void print(int id);
+static void init(int id);
 
 typedef enum {
   NONE = 0,
@@ -59,26 +69,32 @@ typedef enum {
   IMAGE,
   CROSSBUTTON,
   PANEL,
-  INPUT
+  INPUT,
+  TEXTSCROLLAREA,
 } WidgetType;
 
-typedef void (*callback_print_func)(size_t widget_index);
-typedef void (*callback_event_func)(size_t widget_index);
+typedef void (*callback_init_func)(int widget_index);
+typedef void (*callback_print_func)(int widget_index);
+typedef void (*callback_event_func)(int widget_index);
 
 typedef struct {
   WidgetType type;
-  char filename[128];                  // IMAGE
-  Texture2D texture;                   // IMAGE
-  char text[256];                      // LABEL, BUTTON, INPUT
-  size_t textmaxcount;                 // INPUT
-  Vector2 position;                    // all
-  Color backgroundcolor;               // LABEL, PANEL, BUTTON
-  Color textcolor;                     // LABEL, BUTTON, CROSSBUTTON, INPUT
-  Vector2 size;                        // BUTTON, PANEL
-  size_t fontindex;                    // LABEL, BUTTON, CROSSBUTTON, TEXT
-  bool sunken;                         // PANEL
-  bool mouse_on_widget;                // all
-  bool typing;                         // INPUT
+  char filename[128];     // IMAGE
+  Texture2D texture;      // IMAGE
+  char text[256];         // LABEL, BUTTON, INPUT
+  size_t textmaxcount;    // INPUT
+  Vector2 position;       // all
+  Color backgroundcolor;  // LABEL, PANEL, BUTTON, TEXTSCROLLAREA
+  Color textcolor;        // LABEL, BUTTON, CROSSBUTTON, INPUT, TEXTSCROLLAREA
+  Vector2 size;           // BUTTON, PANEL, TEXTSCROLLAREA
+  size_t fontindex;       // LABEL, BUTTON, CROSSBUTTON, TEXT, TEXTSCROLLAREA
+  bool sunken;            // PANEL, TEXTSCROLLAREA
+  bool mouse_on_widget;   // all
+  bool typing;            // INPUT
+  char* longtext;         // TEXTSCROLLAREA (via init)
+  float yscrollpos;       // TEXTSCROLLAREA
+  float ytextmax;         // TEXTSCROLLAREA
+  callback_print_func init_event_fn;   // TEXTSCROLLAREA
   callback_print_func print_event_fn;  // LABEL, BUTTON
   callback_event_func click_event_fn;  // LABEL, BUTTON, IMAGE, CROSSBUTTON
 } WidgetData;
@@ -242,6 +258,18 @@ WidgetData widgets[MAX_WIDGETS] = {
         .fontindex = 2,
         .print_event_fn = print,
     },
+    {
+        // 16
+        .type = TEXTSCROLLAREA,
+        .textcolor = DARKPURPLE,
+        .backgroundcolor = (Color){205, 235, 247, 255},
+        .sunken = true,
+        .position = {630, 360},
+        .size = {350, 220},
+        .fontindex = 1,
+        .yscrollpos = 0,
+        .init_event_fn = init,
+    },
 };
 Font font[FONT_COUNT];
 
@@ -325,14 +353,17 @@ static void Startup(void) {
       default:
         break;
     }
+    if (widgets[i].init_event_fn)
+      widgets[i].init_event_fn(i);
   }
 }
 
 static void Update(void) {
   mousepos = GetMousePosition();
-  bool mousereleased = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+  bool mouseleftreleased = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+  bool mouserightreleased = IsMouseButtonReleased(MOUSE_BUTTON_RIGHT);
   mousepressed = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-  if (mousereleased)
+  if (mouseleftreleased)
     stoptyping();
   if (typing_widget >= 0)
     process_keys();
@@ -349,10 +380,28 @@ static void Update(void) {
                 mousepos,
                 (Rectangle){widgets[i].position.x, widgets[i].position.y,
                             widgets[i].size.x, widgets[i].size.y})) {
-          if (mousereleased && widgets[i].click_event_fn)
+          if (mouseleftreleased && widgets[i].click_event_fn)
             widgets[i].click_event_fn(i);
           widgets[i].mouse_on_widget = true;
           notfound = false;
+        }
+        break;
+      case TEXTSCROLLAREA:
+        if (CheckCollisionPointRec(
+                mousepos,
+                (Rectangle){widgets[i].position.x, widgets[i].position.y,
+                            widgets[i].size.x, widgets[i].size.y})) {
+          if (mouseleftreleased)
+            widgets[i].yscrollpos -= widgets[i].size.y;
+          if (mouserightreleased)
+            widgets[i].yscrollpos += widgets[i].size.y;
+          widgets[i].yscrollpos += GetMouseWheelMove() * 25;
+          if (widgets[i].yscrollpos > 0.f)
+            widgets[i].yscrollpos = 0.f;
+          if (widgets[i].yscrollpos <
+              -widgets[i].ytextmax + widgets[i].size.y * .95)
+            widgets[i].yscrollpos =
+                -widgets[i].ytextmax + widgets[i].size.y * .95;
         }
         break;
       case INPUT:
@@ -360,7 +409,7 @@ static void Update(void) {
                 mousepos,
                 (Rectangle){widgets[i].position.x, widgets[i].position.y,
                             widgets[i].size.x, widgets[i].size.y})) {
-          if (mousereleased) {
+          if (mouseleftreleased) {
             typing_widget = i;
             widgets[i].typing = true;
             set_input_cursor(true, widgets[i].text);
@@ -381,6 +430,21 @@ static void Render(void) {
         paintRectangle(widgets[i].position, widgets[i].size,
                        widgets[i].backgroundcolor, false, widgets[i].sunken,
                        false);
+        break;
+      case TEXTSCROLLAREA:
+        paintRectangle(widgets[i].position, widgets[i].size,
+                       widgets[i].backgroundcolor, false, widgets[i].sunken,
+                       false);
+        BeginScissorMode(widgets[i].position.x + 5, widgets[i].position.y + 5,
+                         widgets[i].size.x - 10, widgets[i].size.y - 10);
+        DrawTextEx(font[widgets[i].fontindex], widgets[i].longtext,
+                   (Vector2){widgets[i].position.x + 5,
+                             widgets[i].position.y + widgets[i].yscrollpos},
+                   font[widgets[i].fontindex].baseSize,
+                   font[widgets[i].fontindex].baseSize / 24,
+                   widgets[i].textcolor);
+        EndScissorMode();
+        paintScrollbar(i);
         break;
       case IMAGE:
         DrawTexture(widgets[i].texture, widgets[i].position.x,
@@ -424,8 +488,15 @@ static void Render(void) {
 
 static void Shutdown(void) {
   for (size_t i = 0; i < MAX_WIDGETS; i++) {
-    if (widgets[i].type == IMAGE) {
-      UnloadTexture(widgets[i].texture);
+    switch (widgets[i].type) {
+      case IMAGE:
+        UnloadTexture(widgets[i].texture);
+        break;
+      case TEXTSCROLLAREA:
+        free(widgets[i].longtext);
+        break;
+      default:
+        break;
     }
   }
   for (size_t i = 0; i < FONT_COUNT; i++)
@@ -511,6 +582,15 @@ static void paintTextButton(const char* text,
              font.baseSize, font.baseSize / 24, textcolor);
 }
 
+static void paintScrollbar(int id) {
+  float x = widgets[id].position.x + widgets[id].size.x + 2;
+  float y = widgets[id].position.y + widgets[id].size.y *
+                                         widgets[id].yscrollpos /
+                                         (-widgets[id].ytextmax);
+  float h = widgets[id].size.y * widgets[id].size.y / widgets[id].ytextmax;
+  DrawRectangleV((Vector2){x, y}, (Vector2){3, h}, DARKGRAY);
+}
+
 static size_t u32_to_utf8(const uint32_t cp, char out[5]) {
   for (int i = 0; i < 5; i++)
     out[i] = '\0';
@@ -577,7 +657,6 @@ static void process_keys(void) {
   char buf[5];
   while ((key = GetKeyPressed()) != 0) {
     if (KEY_BACKSPACE == key) {
-      // printf("BACKSPACE %s\n",widgets[typing_widget].text);
       set_input_cursor(false, widgets[typing_widget].text);
       remove_last_utf8_char(widgets[typing_widget].text);
       set_input_cursor(true, widgets[typing_widget].text);
@@ -604,24 +683,81 @@ static void stoptyping(void) {
     widgets[j].typing = false;
 }
 
-static void click(size_t id) {
+static void allocate_and_wrap_longtext(int id, char* text) {
+  int width = widgets[id].size.x;
+  Vector2 charsize = MeasureTextEx(font[widgets[id].fontindex], "b",
+                                   font[widgets[id].fontindex].baseSize,
+                                   font[widgets[id].fontindex].baseSize / 24);
+  int chwidth = charsize.x;
+  widgets[id].longtext = wrap_text_words(text, width / chwidth);
+}
+
+static char* wrap_text_words(const char* text, int width) {
+  int len = strlen(text);
+  int cap = len * 2 + 2;
+  char* out = malloc(cap);
+  int j = 0;
+  int curw = 0;
+  for (int i = 0; i < len;) {
+    if (text[i] == '\n') {
+      out[j++] = '\n';
+      curw = 0;
+      i++;
+      continue;
+    }
+    if (text[i] == ' ') {
+      i++;
+      continue;
+    }
+    int start = i;
+    while (i < len && text[i] != ' ' && text[i] != '\n')
+      i++;
+    int wlen = i - start;
+    if (curw && curw + 1 + wlen > width) {
+      out[j++] = '\n';
+      curw = 0;
+    }
+    if (wlen > width) {
+      for (int k = 0; k < wlen; k++) {
+        if (curw + 1 > width) {
+          out[j++] = '\n';
+          curw = 0;
+        }
+        out[j++] = text[start + k];
+        curw += 1;
+      }
+      continue;
+    }
+    if (curw) {
+      out[j++] = ' ';
+      curw += 1;
+    }
+    memcpy(out + j, text + start, wlen);
+    j += wlen;
+    curw += wlen;
+  }
+  out[j] = '\0';
+  return realloc(out, j + 1);
+}
+
+static void click(int id) {
   if (id == 5)
     state1++;
-  if (id == 6)
+  else if (id == 6)
     state2++;
-  if (id == 7)
+  else if (id == 7)
     state3++;
-  if (id == 12)
+  else if (id == 12)
     state4 = !state4;
-  if (id == 11)
+  else if (id == 11)
     state5 = !state5;
-  if (id == 3)
+  else if (id == 3)
     state6 = !state6;
-  if (id == 10)
+  else if (id == 10)
     exitstate = true;
 }
 
-static void print(size_t id) {
+static void print(int id) {
   if (id > 4 && id < 8) {
     int state = 0;
     if (id == 5)
@@ -631,22 +767,42 @@ static void print(size_t id) {
     if (id == 7)
       state = state3;
     sprintf(widgets[id].text, "Click me! (%d)", state);
-  }
-  if (id == 8)
+  } else if (id == 8)
     widgets[id].textcolor = state4 ? BLACK : APP_BACKGROUND_COLOR;
-  if (id == 9)
+  else if (id == 9)
     widgets[id].textcolor = state5 ? BLACK : APP_BACKGROUND_COLOR;
-  if (id == 3) {
+  else if (id == 3) {
     widgets[id].backgroundcolor = state6 ? LIME : YELLOW;
     widgets[id].textcolor = state6 ? WHITE : BLACK;
+  } else if (id == 15) {
+    sprintf(widgets[id].text, "Inputted data:\n%.35s\n%.35s",
+            typing_widget != 13 ? widgets[13].text : "...",
+            typing_widget != 14 ? widgets[14].text : "...");
   }
-  if (id == 15) {
-    widgets[id].text[0] = '\0';
-    strcat(widgets[id].text, "Inputted data:\n");
-    if (typing_widget != 13)
-      strncat(widgets[id].text, widgets[13].text, 35);
-    strcat(widgets[id].text, "\n");
-    if (typing_widget != 14)
-      strncat(widgets[id].text, widgets[14].text, 35);
+}
+
+static void init(int id) {
+  if (id == 16) {
+    allocate_and_wrap_longtext(
+        id,
+        "Scroll this text via the mouse wheel!\nOr click left or right "
+        "mouse button to Page-down or Page-Up!\n\n"
+        "raylib is a programming library to enjoy videogames programming; "
+        "no fancy interface, no visual helpers, no gui tools or editors... "
+        "just coding in pure spartan-programmers way. Are you ready to "
+        "enjoy coding?\n\n"
+        "raylib is a programming library to enjoy videogames programming; "
+        "no fancy interface, no visual helpers, no gui tools or editors... "
+        "just coding in pure spartan-programmers way. Are you ready to "
+        "enjoy coding?\n\n"
+        "raylib is a programming library to enjoy videogames programming; "
+        "no fancy interface, no visual helpers, no gui tools or editors... "
+        "just coding in pure spartan-programmers way. Are you ready to "
+        "enjoy coding?");
+    Vector2 size =
+        MeasureTextEx(font[widgets[id].fontindex], widgets[id].longtext,
+                      font[widgets[id].fontindex].baseSize,
+                      font[widgets[id].fontindex].baseSize / 24);
+    widgets[id].ytextmax = size.y;
   }
 }
