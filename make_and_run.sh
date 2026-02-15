@@ -2,9 +2,9 @@
 cd `dirname $0`
 echo MAKE .....................
 make clean
-clang-format --style=Chromium -i src/*.c src/*.h
+clang-format --style=Chromium -i *.c *.h
 make all
 echo RUN ......................
-./build/main
+./my_raylib_gui
 echo RC=$?
 sleep 2

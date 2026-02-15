@@ -22,10 +22,23 @@
     230, 230, 230, 255       \
   }
 #define TARGET_FPS 60
+
 #define FONT_COUNT 3
-#define FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+#define FONT_PATHS                                             \
+  {                                                            \
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",     \
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", \
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"  \
+  }
 #define FONT_SIZES \
   { 48, 36, 24 }
+#define FONT_ADD_CP_RANGES_COUNT 1
+#define FONT_ADD_CP_RANGES \
+  {                        \
+    { 0xa1, 0x24f }        \
+  }
+#define INPUT_CURSOR '_'
+
 #define MAX_WIDGETS 20
 
 int main(void);
@@ -313,9 +326,14 @@ static void Startup(void) {
                     monitorHeight / 2 - SCREEN_HEIGHT / 2);
   // Fonts
   int fontsizes[FONT_COUNT] = FONT_SIZES;
+  char* fontpaths[FONT_COUNT] = FONT_PATHS;
+  int fontaddcpranges[FONT_ADD_CP_RANGES_COUNT][2] = FONT_ADD_CP_RANGES;
   for (size_t i = 0; i < FONT_COUNT; i++) {
-    font[i] = LoadFontEx(FONT_PATH, fontsizes[i], NULL, 0);
-    AddCodepointRange(&font[i], FONT_PATH, 0xa1, 0x24f);
+    font[i] = LoadFontEx(fontpaths[i], fontsizes[i], NULL, 0);
+    for (size_t j = 0; j < FONT_ADD_CP_RANGES_COUNT; j++) {
+      AddCodepointRange(&font[i], fontpaths[i], fontaddcpranges[j][0],
+                        fontaddcpranges[j][1]);
+    }
     SetTextureFilter(font[i].texture, TEXTURE_FILTER_BILINEAR);
   }
   SetTextLineSpacing(0);
@@ -646,7 +664,7 @@ static size_t utf8_strlen(const char* s) {
 static void set_input_cursor(bool yes, char* text) {
   int len = strlen(text);
   if (yes)
-    text[len] = '_';
+    text[len] = INPUT_CURSOR;
   else
     len = len - 2;
   text[len + 1] = '\0';
