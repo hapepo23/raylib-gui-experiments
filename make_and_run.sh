@@ -2,9 +2,10 @@
 cd `dirname $0`
 echo MAKE .....................
 make clean
-clang-format --style=Chromium -i *.c *.h
-make all
+clang-format --style=Chromium -i src/*.c src/*.h
+make
 echo RUN ......................
-./my_raylib_gui
+./myraygui_test
 echo RC=$?
-sleep 2
+echo WAIT .....................
+read X

@@ -1,7 +1,7 @@
 #!/bin/bash
 cd `dirname $0`
 echo RUN ......................
-./my_raylib_gui
+./myraygui_test
 echo RC=$?
 echo WAIT .....................
-sleep 2
+read X

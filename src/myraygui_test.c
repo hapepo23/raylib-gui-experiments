@@ -1,8 +1,10 @@
 #include <raylib.h>
 #include <stdio.h>
 
-/* RayLib GUI Experiments: Text, Fonts (ASCII plus codepoints U+00a1 to U+024f),
-   Images, Buttons, Labels, Panels, Input fields, Scrollable Text, Callbacks
+/* RayLib GUI Experiments: Text, Fonts (ASCII plus codepoints U+00a1
+   to U+024f), Images, Buttons, Labels, Panels, Input fields,
+   Scrollable Text, Callbacks.
+
    Version 15 Feb 2026 */
 
 /* ----------------------------------------------------------------*/
@@ -49,6 +51,7 @@
 
 /* ----------------------------------------------------------------*/
 
+int main(void);
 static void click(int id);
 static void print(int id);
 static void init(int id);
@@ -241,6 +244,22 @@ static int state3 = 0;
 static bool state4 = false;
 static bool state5 = false;
 static bool state6 = false;
+
+/* ----------------------------------------------------------------*/
+
+// Main
+
+int main(void) {
+  Startup();
+  while (!WindowShouldClose() && !exitstate) {
+    Update();
+    BeginDrawing();
+    Render();
+    EndDrawing();
+  }
+  Shutdown();
+  return 0;
+}
 
 /* ----------------------------------------------------------------*/
 
