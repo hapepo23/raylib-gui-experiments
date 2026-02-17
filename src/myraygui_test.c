@@ -5,7 +5,7 @@
    to U+024f), Images, Buttons, Labels, Panels, Input fields,
    Scrollable Text, Callbacks.
 
-   Version 15 Feb 2026 */
+   Version 17 Feb 2026 */
 
 /* ----------------------------------------------------------------*/
 
@@ -17,7 +17,7 @@
 
 // Definitions
 
-#define SCREEN_WIDTH 1350
+#define SCREEN_WIDTH 1370
 #define SCREEN_HEIGHT 800
 #define APP_TITLE "Raylib GUI Experiments"
 #define APP_ICON "icon.png"
@@ -28,14 +28,13 @@
 #define TARGET_FPS 30
 
 #define FONT_COUNT 3
-#define FONT_PATHS                                                        \
-  {                                                                       \
-    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",                \
-        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",            \
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf" \
+#define FONT_PATHS                                              \
+  {                                                             \
+    "LiberationSans-Regular.ttf", "LiberationSans-Regular.ttf", \
+        "LiberationSans-Regular.ttf"                            \
   }
 #define FONT_SIZES \
-  { 48, 36, 24 }
+  { 46, 34, 22 }
 #define FONT_ADD_CP_RANGES_COUNT 1
 #define FONT_ADD_CP_RANGES \
   {                        \
@@ -64,7 +63,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
     {
         // 0
         .type = PANEL,
-        .position = {1090, 40},
+        .position = {1190, 40},
         .size = {148, 148},
         .backgroundcolor = WHITE,
         .sunken = true,
@@ -72,7 +71,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
     {
         // 1
         .type = PANEL,
-        .position = {1090, 240},
+        .position = {1190, 240},
         .size = {148, 148},
         .backgroundcolor = DARKGRAY,
         .sunken = false,
@@ -82,11 +81,11 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text =
             "SIZE="
-            "48\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
+            "46\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
             "NM\nß^"
             "°1234567890!\"§$%&/\n()=?`'*+'#_-:.;,><|\n~\\}][{³²@€~µáàâéèê",
         .backgroundcolor = WHITE,
-        .position = {100, 50},
+        .position = {10, 50},
         .textcolor = BLACK,
         .fontindex = 0,
     },
@@ -95,12 +94,12 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text =
             "SIZE="
-            "36 CLICK "
+            "34 CLICK "
             "ME!\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
             "NM\nß^"
             "°1234567890!\"§$%&/\n()=?`'*+'#_-:.;,><|\n~\\}][{³²@€~µáàâéèê",
         .backgroundcolor = YELLOW,
-        .position = {100, 360},
+        .position = {10, 360},
         .textcolor = BLACK,
         .fontindex = 1,
         .click_event_fn = click,
@@ -111,18 +110,18 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text =
             "SIZE="
-            "24\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
+            "22\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
             "NM\nß^"
             "°1234567890!\"§$%&/\n()=?`'*+'#_-:.;,><|\n~\\}][{³²@€~µáàâéèê",
         .backgroundcolor = LIGHTGRAY,
-        .position = {100, 600},
+        .position = {10, 600},
         .textcolor = BLACK,
         .fontindex = 2,
     },
     {
         // 5
         .type = BUTTON,
-        .position = {1000, 500},
+        .position = {1100, 500},
         .size = {250, 70},
         .textcolor = BLACK,
         .fontindex = 1,
@@ -132,7 +131,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
     {
         // 6
         .type = BUTTON,
-        .position = {1000, 600},
+        .position = {1100, 600},
         .size = {250, 70},
         .textcolor = BLUE,
         .fontindex = 1,
@@ -142,7 +141,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
     {
         // 7
         .type = BUTTON,
-        .position = {1000, 700},
+        .position = {1100, 700},
         .size = {250, 70},
         .textcolor = RED,
         .fontindex = 2,
@@ -154,7 +153,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text = "A lightning!",
         .backgroundcolor = APP_BACKGROUND_COLOR,
-        .position = {1100, 200},
+        .position = {1200, 200},
         .textcolor = APP_BACKGROUND_COLOR,
         .fontindex = 2,
         .print_event_fn = print,
@@ -164,7 +163,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text = "A cat!",
         .backgroundcolor = APP_BACKGROUND_COLOR,
-        .position = {1100, 400},
+        .position = {1200, 400},
         .textcolor = APP_BACKGROUND_COLOR,
         .fontindex = 2,
         .print_event_fn = print,
@@ -181,14 +180,14 @@ static WidgetData widgets[MAX_WIDGETS] = {
         // 11
         .type = IMAGE,
         .filename = "cat.jpg",
-        .position = {1100, 250},
+        .position = {1200, 250},
         .click_event_fn = click,
     },
     {
         // 12
         .type = IMAGE,
         .filename = "icon.png",
-        .position = {1100, 50},
+        .position = {1200, 50},
         .click_event_fn = click,
     },
     {
@@ -226,8 +225,8 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .textcolor = DARKPURPLE,
         .backgroundcolor = (Color){205, 235, 247, 255},
         .sunken = true,
-        .position = {630, 360},
-        .size = {350, 220},
+        .position = {700, 360},
+        .size = {380, 200},
         .fontindex = 2,
         .yscrollpos = 0,
         .init_event_fn = init,
