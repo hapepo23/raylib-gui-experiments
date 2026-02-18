@@ -5,7 +5,7 @@
    to U+024f), Images, Buttons, Labels, Panels, Input fields,
    Scrollable Text, Callbacks.
 
-   Version 17 Feb 2026 */
+   Version 2026-02-18 */
 
 /* ----------------------------------------------------------------*/
 
@@ -35,11 +35,14 @@
   }
 #define FONT_SIZES \
   { 46, 34, 22 }
+#define FONT_SPACINGS \
+  { 0.f, 0.f, 0.f }
 #define FONT_ADD_CP_RANGES_COUNT 1
 #define FONT_ADD_CP_RANGES \
   {                        \
     { 0xa1, 0x24f }        \
   }
+#define TEXT_LINE_SPACING 0
 #define INPUT_CURSOR '_'
 
 #define MAX_WIDGETS 17
