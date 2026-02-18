@@ -45,7 +45,7 @@
 #define TEXT_LINE_SPACING 0
 #define INPUT_CURSOR '_'
 
-#define MAX_WIDGETS 17
+#define MAX_WIDGETS 18
 
 /* ----------------------------------------------------------------*/
 
@@ -97,7 +97,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .type = LABEL,
         .text =
             "SIZE="
-            "34 CLICK "
+            "34 - CLICK "
             "ME!\nɏqwertzuiopüasdfghjklöäyxcvbnm\nQWERTZUIOPÜASDFGHJKLÖÄYXCVB"
             "NM\nß^"
             "°1234567890!\"§$%&/\n()=?`'*+'#_-:.;,><|\n~\\}][{³²@€~µáàâéèê",
@@ -234,6 +234,13 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .yscrollpos = 0,
         .init_event_fn = init,
     },
+    {
+        // 17
+        .type = CLICKAREA,
+        .position = {0, 0},
+        .size = {10, 10},
+        .click_event_fn = click,
+    },
 };
 
 /* ----------------------------------------------------------------*/
@@ -281,6 +288,8 @@ static void click(int id) {
   else if (id == 3)
     state6 = !state6;
   else if (id == 10)
+    exitstate = true;
+  else if (id == 17)
     exitstate = true;
 }
 
