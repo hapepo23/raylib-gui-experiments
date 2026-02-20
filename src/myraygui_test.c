@@ -45,7 +45,7 @@
 #define TEXT_LINE_SPACING 0
 #define INPUT_CURSOR '_'
 
-#define MAX_WIDGETS 18
+#define MAX_WIDGETS 19
 
 /* ----------------------------------------------------------------*/
 
@@ -128,6 +128,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .size = {250, 70},
         .textcolor = BLACK,
         .fontindex = 1,
+        .keycode1 = KEY_ONE,
         .print_event_fn = print,
         .click_event_fn = click,
     },
@@ -138,6 +139,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .size = {250, 70},
         .textcolor = BLUE,
         .fontindex = 1,
+        .keycode1 = KEY_TWO,
         .print_event_fn = print,
         .click_event_fn = click,
     },
@@ -148,6 +150,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
         .size = {250, 70},
         .textcolor = RED,
         .fontindex = 2,
+        .keycode1 = KEY_THREE,
         .print_event_fn = print,
         .click_event_fn = click,
     },
@@ -238,8 +241,19 @@ static WidgetData widgets[MAX_WIDGETS] = {
         // 17
         .type = CLICKAREA,
         .position = {0, 0},
-        .size = {10, 10},
+        .size = {10, 20},
+        .keycode1 = KEY_F9,
+        .keycode2 = KEY_Q,
         .click_event_fn = click,
+    },
+    {
+        // 18
+        .type = LABEL,
+        .text = "<<< Click this area, or press [F9] or [Q] to quit app",
+        .backgroundcolor = BLANK,
+        .position = {10, 1},
+        .textcolor = (Color){170, 170, 170, 255},
+        .fontindex = 2,
     },
 };
 
@@ -302,7 +316,7 @@ static void print(int id) {
       state = state2;
     if (id == 7)
       state = state3;
-    sprintf(widgets[id].text, "Click me! (%d)", state);
+    sprintf(widgets[id].text, "Click/Key[%d]! (%d)", id - 4, state);
   } else if (id == 8)
     widgets[id].textcolor = state4 ? BLACK : APP_BACKGROUND_COLOR;
   else if (id == 9)
