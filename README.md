@@ -2,8 +2,6 @@
 
 ![Snapshot](snapshot.png)
 
-Version 14 Feb 2026.
-
 Some GUI experiments in C with [**Raylib**](https://www.raylib.com/): Text, Fonts (ASCII plus codepoints U+00a1 to U+024f), Images, Buttons, Labels, Panels, Input fields, Scrollable Text, Callbacks.
 
 -----
