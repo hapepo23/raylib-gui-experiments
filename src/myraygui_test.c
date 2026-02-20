@@ -5,7 +5,7 @@
    to U+024f), Images, Buttons, Labels, Panels, Input fields,
    Scrollable Text, Callbacks.
 
-   Version 2026-02-18 */
+   Version 2026-02-20 */
 
 /* ----------------------------------------------------------------*/
 
