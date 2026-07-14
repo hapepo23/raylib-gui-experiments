@@ -185,7 +185,7 @@ static WidgetData widgets[MAX_WIDGETS] = {
     {
         // 11
         .type = IMAGE,
-        .filename = "cat.jpg",
+        .filename = "cat.png",
         .position = {1200, 250},
         .click_event_fn = click,
     },
